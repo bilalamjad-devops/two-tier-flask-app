@@ -31,11 +31,14 @@ Before you begin, make sure you have the following installed:
 ```bash
 docker build -t flaskapp .
 ```
+docker images
 
 - Now, make sure that you have created a network using following command
 ```bash
 docker network create twotier
 ```
+
+docker network ls 
 
 - Attach both the containers in the same network, so that they can communicate with each other
 
@@ -64,6 +67,9 @@ docker run -d \
     flaskapp:latest
 
 ```
+docker ps
+
+Open port 5000
 
 Delete old containers:
 
