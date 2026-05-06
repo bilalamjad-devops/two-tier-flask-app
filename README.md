@@ -65,6 +65,13 @@ docker run -d \
 
 ```
 
+Delete old containers:
+
+```bash
+docker ps
+docker kill 
+docker rm 
+```
 
 iii) Push to DockerHub 
 
@@ -84,13 +91,7 @@ docker images
 docker push Your-DockerHub-Username/flaskapp:latest 
 ```
 
-Delete old containers:
 
-```bash
-docker ps
-docker kill 
-docker rm 
-```
 
 ## To run this two-tier application using docker-compose
 
