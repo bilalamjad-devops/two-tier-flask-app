@@ -1,3 +1,15 @@
+
+## ✅ Current Branch Strategy Review
+
+| Branch | Purpose | Strength |
+|---------|----------|-----------|
+| **branch1** | Local setup (basic Flask + MySQL) | Good starting point — isolates app logic before containerization. |
+| **branch2** | Docker + Docker Compose | Excellent next step — introduces containerization and networking. |
+| **branch3** | Docker + Docker Compose + Jenkins CI | Smart addition — brings automation into the build/test phase. |
+| **branch4** | Docker + Docker Compose + Kubernetes | Logical progression — moves from local orchestration to cluster deployment. |
+| **main** | Full pipeline: Docker, Compose, Jenkins CI/CD, Kubernetes, ArgoCD | Perfect consolidation — represents production-ready DevOps workflow. |
+
+---
  
 # Flask App with MySQL Docker Setup
 
