@@ -120,7 +120,9 @@ docker images
 docker tag flaskapp:latest Your-DockerHub-Username/flaskapp:latest 
 ```
 
-
+```bash
+docker images
+```
 
 ```bash
 docker push Your-DockerHub-Username/flaskapp:latest 
