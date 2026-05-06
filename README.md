@@ -1,6 +1,5 @@
-Here’s a polished **README.md blog-style documentation** that makes your project approachable, professional, and engaging for anyone who wants to replicate or learn from it:
 
----
+
 
 # 🚀 Two‑Tier Flask + MySQL on Docker & Kubernetes
 
