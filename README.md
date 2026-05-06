@@ -83,7 +83,7 @@ mysql -u root -p
 
 show databases;
 
-use myb;
+use mydb;
 
 
 
