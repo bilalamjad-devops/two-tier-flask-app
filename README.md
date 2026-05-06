@@ -7,26 +7,51 @@ Use this repository to setup kubeadm https://github.com/LondheShubham153/kubesta
 ```bash
 git clone https://github.com/LondheShubham153/two-tier-flask-app.git
 ```
-- Move to k8s directory
+
+Step 3: ☸️ Deploy
+
+
+- MySQL
+
+Prepare Persistent Storage:
+
 ```bash
-cd two-tier-flask-app/k8s
+mkdir mysqldata  # Required for PV
+cd k8s
+kubectl apply -f mysql-pv.yml
+kubectl apply -f mysql-pvc.yml
 ```
-- Now, execute below commands one by one
-```bash
-kubectl apply -f twotier-deployment.yml
-```
-```bash
-kubectl apply -f twotier-deployment-svc.yml
-```
+
+
 ```bash
 kubectl apply -f mysql-deployment.yml
+kubectl apply -f mysql-svc.yml
+```
+
+
+- Flask App:
+
+
+Save MySQL ClusterIP in two-tier-deployment.yaml 
+
+```bash
+kubectl get svc -o wide  # Check Service name and ClusterIP
+```
+
+```bash
+vi two-tier-app-deployment.yml
+1. change image: YOUR-DOCKERHUB-USERNAME/flaskapp:latest # Paste your dockerhub name
+2. change value: "10.98.19.211" # Paste your mysql-service ClusterIP
+```
+
+```bash
+
+kubectl apply -f two-tier-app-deployment.yml
 ```
 ```bash
-kubectl apply -f mysql-deployment-svc.yml
+kubectl apply -f two-tier-app-svc.yml
 ```
-```bash
-kubectl apply -f persistent-volume.yml
-```
-```bash
-kubectl apply -f persistent-volume-claim.yml
-```
+
+
+Verify the app at: http://<EC2_PUBLIC_IP>:30004
+
