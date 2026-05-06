@@ -71,6 +71,32 @@ docker ps
 
 Open port 5000
 
+
+now we have to go inside docker container to add table 
+
+```bash
+docker ps 
+
+docker exec -it mysql bash 
+
+mysql -u root -p 
+
+show databases;
+
+use myDb;
+
+
+
+Open port in browser
+
+type message: this should add data to database
+
+select * from messages;
+
+exit 
+```
+
+
 Delete old containers:
 
 ```bash
