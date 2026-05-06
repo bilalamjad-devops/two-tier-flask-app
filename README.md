@@ -101,8 +101,9 @@ Delete old containers:
 
 ```bash
 docker ps
-docker kill 
-docker rm 
+docker kill CONTAINER ID CONTAINER ID
+docker rm CONTAINER ID CONTAINER ID
+docker ps
 ```
 
 iii) Push to DockerHub 
