@@ -1,6 +1,4 @@
-Here’s a polished **README.md for your `main` branch**, completing the series with **Jenkins CI/CD, GitHub Webhooks, and ArgoCD**. This version ties everything together into a full GitOps pipeline.
 
----
 
 # 🚀 Two‑Tier Flask + MySQL on Docker & Kubernetes (Main Branch)
 
