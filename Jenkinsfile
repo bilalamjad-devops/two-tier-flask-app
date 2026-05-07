@@ -29,7 +29,7 @@ node {
     }
 
 
-    stage('Update GIT') {
+    stage('Update Manifest') {
             script {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     // 'github' must match your Jenkins Credentials ID for Git
