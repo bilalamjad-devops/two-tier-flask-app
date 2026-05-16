@@ -182,18 +182,4 @@ spec:
 
 ---
 
-### **Next Steps for You**
 
-Please share the following so I can make this article even more complete:
-
-1. Your GitHub repository link
-2. Your `Dockerfile`
-3. Your `app.py` (especially the MySQL connection part)
-4. Namespace you want to use (e.g., `flask-app`)
-
-Would you like me to also provide:
-- Sample Flask + MySQL code?
-- Complete Kubernetes manifests (with PV, PVC, Secret)?
-- Best practices for handling DB passwords?
-
-Just tell me and I’ll expand this article with full working examples.
