@@ -1,8 +1,4 @@
-**✅ Updated Article – Single Repository & Single Jenkins Job**
 
-Here's the revised version tailored to your new requirement:
-
----
 
 ### **Deploying Flask Application with MySQL using GitHub, Jenkins & ArgoCD (Single Repo)**
 
