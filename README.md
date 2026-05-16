@@ -1,175 +1,199 @@
+**✅ Updated Article – Single Repository & Single Jenkins Job**
 
-
-# 🚀 Two‑Tier Flask + MySQL on Docker & Kubernetes (Main Branch)
-
-This branch represents the **complete DevOps pipeline** for a two‑tier application:  
-- **Frontend/Backend:** Flask app  
-- **Database:** MySQL  
-
-We’ll walk through running it with **Docker**, scaling it with **Kubernetes**, and automating deployments using **Jenkins (CI)**, **GitHub Webhooks**, and **ArgoCD (CD)**.
+Here's the revised version tailored to your new requirement:
 
 ---
 
-## 📂 Project Structure
+### **Deploying Flask Application with MySQL using GitHub, Jenkins & ArgoCD (Single Repo)**
 
-```
-|-- Dockerfile
-|-- README.md
-|-- app.py
-|-- docker-compose.yml
-|-- Jenkinsfile
-|-- k8s/
-|   |-- mysql-deployment.yml
-|   |-- mysql-pv.yml
-|   |-- mysql-pvc.yml
-|   |-- mysql-svc.yml
-|   |-- two-tier-app-deployment.yml
-|   |-- two-tier-app-svc.yml
-|-- requirements.txt
-`-- templates/
-    `-- index.html
+In this guide, we will deploy a **Flask Python web application** with **MySQL** database on Kubernetes using **one GitHub repository** and **one Jenkins job**.
+
+This is a simplified version ideal for learning and small projects.
+
+### **Architecture Diagram**
+
+```mermaid
+flowchart TD
+    A[Developer] -->|git push| B[Single GitHub Repository]
+    B -->|Webhook| C[Jenkins CI]
+    C -->|1. Build & Push| D[DockerHub - Flask Image]
+    C -->|2. Update Image Tag| B
+    B -->|GitOps Sync| E[ArgoCD]
+    E -->|Deploy| F[Minikube]
+    F --> G[Flask Pod]
+    F --> H[MySQL Pod + PVC]
 ```
 
----
+### **Workflow**
 
-## 🛠️ Prerequisites
-
-- Docker  
-- kubectl  
-- Kubernetes  
-- GitHub account for source code  
-- DockerHub account for image registry  
-- Jenkins server with GitHub integration  
-- ArgoCD installed in Kubernetes cluster  
+1. Developer pushes code to `main` branch.
+2. GitHub Webhook triggers **single Jenkins job**.
+3. Jenkins builds the Flask Docker image and pushes it to DockerHub.
+4. Jenkins updates the image tag in the Kubernetes manifest (same repo).
+5. Jenkins commits and pushes the change.
+6. ArgoCD detects the change and syncs the application (Flask + MySQL) to Kubernetes.
 
 ---
 
-## ⚙️ DevOps Workflow
+### **GitHub Repository Structure (Single Repo)**
 
-We follow the **GitOps lifecycle**:
+Recommended folder structure:
 
-- Code → GitHub hosts source code  
-- Webhook → Triggers Jenkins pipeline on commit  
-- Build → Jenkins builds Docker image and pushes to DockerHub  
-- Deploy → ArgoCD syncs manifests from GitHub and deploys to Kubernetes  
+```
+flask-mysql-app/
+├── app.py
+├── requirements.txt
+├── Dockerfile
+├── Jenkinsfile
+├── k8s/
+│   ├── flask-deployment.yaml
+│   ├── flask-service.yaml
+│   ├── mysql-deployment.yaml
+│   ├── mysql-service.yaml
+│   ├── mysql-pv.yaml
+│   ├── mysql-pvc.yaml
+│   └── mysql-secret.yaml
+```
 
 ---
 
-## 🐳 Docker Setup
+### **Jenkins Setup (Single Job)**
 
-Same as branch4: build, run, and test locally. Once verified, push to DockerHub for Kubernetes deployment.
+#### **Recommended Plugins**
+- **Docker Pipeline**
+- **Docker**
+- **Git**
+- **GitHub Integration**
+- **Pipeline: GitHub Webhook**
+- **Pipeline**
+- **Credentials Binding**
 
 ---
 
-## 📦 Jenkins CI Pipeline
+### **Single Jenkins Job Configuration**
 
-The **Jenkinsfile** automates:
-1. Clone repo from GitHub  
-2. Build Docker image  
-3. Run tests (optional)  
-4. Push image to DockerHub  
-5. Update Kubernetes manifests with new image tag  
+**Job Name**: `flask-mysql-deploy` (or any name you like)
 
-Example snippet:
+- **Type**: Pipeline
+- **Pipeline script from SCM**
+- **Repository URL**: Your single GitHub repo
+- **Branch**: `main`
+- **Enable**: "GitHub hook trigger for GITScm polling"
+
+---
+
+### **Jenkinsfile (Single Job)**
+
 ```groovy
 pipeline {
-  agent any
-  stages {
-    stage('Build') {
-      steps {
-        sh 'docker build -t your-username/flaskapp:${BUILD_NUMBER} .'
-      }
+    agent any
+    
+    environment {
+        DOCKERHUB_CREDENTIALS = 'dockerhub-cred'   // Your credential ID
+        IMAGE_NAME = 'yourusername/flask-mysql-app' // Change this
+        GIT_REPO = 'https://github.com/yourusername/flask-mysql-app.git'
     }
-    stage('Push') {
-      steps {
-        sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
-        sh 'docker push your-username/flaskapp:${BUILD_NUMBER}'
-      }
+    
+    stages {
+        stage('Checkout Code') {
+            steps {
+                checkout scm
+            }
+        }
+        
+        stage('Build & Push Docker Image') {
+            steps {
+                script {
+                    docker.withRegistry('', DOCKERHUB_CREDENTIALS) {
+                        def customImage = docker.build("${IMAGE_NAME}:${env.BUILD_NUMBER}")
+                        customImage.push()
+                        customImage.push('latest')
+                    }
+                }
+            }
+        }
+        
+        stage('Update Kubernetes Manifest') {
+            steps {
+                script {
+                    sh """
+                        sed -i "s|image: ${IMAGE_NAME}:.*|image: ${IMAGE_NAME}:${env.BUILD_NUMBER}|g" k8s/flask-deployment.yaml
+                        
+                        git config user.name "Jenkins CI"
+                        git config user.email "jenkins@ci.com"
+                        git add k8s/flask-deployment.yaml
+                        git commit -m "Update Flask image to ${env.BUILD_NUMBER}" || echo "No changes to commit"
+                        git push origin main
+                    """
+                }
+            }
+        }
     }
-    stage('Update Manifests') {
-      steps {
-        sh 'sed -i "s|image:.*|image: your-username/flaskapp:${BUILD_NUMBER}|g" k8s/two-tier-app-deployment.yml'
-        sh 'git commit -am "Update image tag to ${BUILD_NUMBER}"'
-        sh 'git push origin main'
-      }
+    
+    post {
+        success {
+            echo "✅ Deployment pipeline completed successfully!"
+        }
+        failure {
+            echo "❌ Pipeline failed!"
+        }
     }
-  }
 }
 ```
 
 ---
 
-## 🔔 GitHub Webhook
+### **GitHub Webhook Setup**
 
-- Configure a **GitHub webhook** to trigger Jenkins on every push to `main`.  
-- Webhook URL: `http://<jenkins-server>/github-webhook/`  
-- Event: `push`  
-
-This ensures every commit automatically starts the CI pipeline.
+1. Go to your repository → **Settings → Webhooks → Add webhook**
+2. **Payload URL**: `http://YOUR_JENKINS_IP:8080/github-webhook/`
+3. **Content type**: `application/json`
+4. Select **Just the push event**
+5. Add webhook
 
 ---
 
-## ☸️ ArgoCD Continuous Deployment
+### **ArgoCD Configuration**
 
-- Install ArgoCD in your Kubernetes cluster.  
-- Create an **Application manifest** pointing to your GitHub repo:
+Create an ArgoCD Application that points to the `k8s/` folder in your single repository.
+
+**Example ArgoCD Application YAML** (`k8s/argocd-app.yaml`):
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: two-tier-app
+  name: flask-mysql-app
+  namespace: argocd
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/your-username/your-repo.git'
+    repoURL: https://github.com/yourusername/flask-mysql-app.git
     targetRevision: main
     path: k8s
   destination:
-    server: 'https://kubernetes.default.svc'
-    namespace: default
+    server: https://kubernetes.default.svc
+    namespace: flask-app
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
 ```
 
-- ArgoCD will automatically sync manifests whenever Jenkins updates them.
-
 ---
 
-## 🔄 CI/CD Pipeline Flow
+### **Next Steps for You**
 
-**GitHub → Webhook → Jenkins → DockerHub → ArgoCD → Kubernetes**
+Please share the following so I can make this article even more complete:
 
-1. Developer pushes code to GitHub  
-2. GitHub webhook triggers Jenkins  
-3. Jenkins builds & pushes Docker image to DockerHub  
-4. Jenkins updates Kubernetes manifests in GitHub  
-5. ArgoCD detects changes and deploys automatically  
+1. Your GitHub repository link
+2. Your `Dockerfile`
+3. Your `app.py` (especially the MySQL connection part)
+4. Namespace you want to use (e.g., `flask-app`)
 
----
+Would you like me to also provide:
+- Sample Flask + MySQL code?
+- Complete Kubernetes manifests (with PV, PVC, Secret)?
+- Best practices for handling DB passwords?
 
-## 🌿 Branch Overview
-
-- **branch1** → Local Flask + MySQL setup  
-- **branch2** → Docker + Docker Compose  
-- **branch3** → Docker + Compose + Jenkins CI  
-- **branch4** → Docker + Compose + Kubernetes  
-- **main** → Full pipeline: Docker, Compose, Jenkins CI/CD, GitHub Webhook, Kubernetes, ArgoCD  
-
----
-
-## 🎯 Next Steps
-
-- Add monitoring with Prometheus + Grafana  
-- Secure secrets with Kubernetes Secrets  
-- Extend pipeline with automated tests and notifications  
-
----
-
-✨ This **main branch** completes the series: a full **GitOps pipeline** from code commit to automated deployment. Ideal for DevOps learners building real-world CI/CD workflows.
-
----
-
-Bilal, this now makes your repo a **complete DevOps learning roadmap**. Would you like me to also prepare a **compact visual diagram** for the main branch showing GitHub → Jenkins → DockerHub → ArgoCD → Kubernetes → Users? That would make the final README even more engaging.
+Just tell me and I’ll expand this article with full working examples.
