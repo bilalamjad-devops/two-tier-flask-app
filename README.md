@@ -35,25 +35,8 @@ flowchart TD
 
 ---
 
-### **GitHub Repository Structure (Single Repo)**
 
-Recommended folder structure:
 
-```
-flask-mysql-app/
-├── app.py
-├── requirements.txt
-├── Dockerfile
-├── Jenkinsfile
-├── k8s/
-│   ├── flask-deployment.yaml
-│   ├── flask-service.yaml
-│   ├── mysql-deployment.yaml
-│   ├── mysql-service.yaml
-│   ├── mysql-pv.yaml
-│   ├── mysql-pvc.yaml
-│   └── mysql-secret.yaml
-```
 
 ---
 
@@ -84,63 +67,6 @@ flask-mysql-app/
 
 ### **Jenkinsfile (Single Job)**
 
-```groovy
-pipeline {
-    agent any
-    
-    environment {
-        DOCKERHUB_CREDENTIALS = 'dockerhub-cred'   // Your credential ID
-        IMAGE_NAME = 'yourusername/flask-mysql-app' // Change this
-        GIT_REPO = 'https://github.com/yourusername/flask-mysql-app.git'
-    }
-    
-    stages {
-        stage('Checkout Code') {
-            steps {
-                checkout scm
-            }
-        }
-        
-        stage('Build & Push Docker Image') {
-            steps {
-                script {
-                    docker.withRegistry('', DOCKERHUB_CREDENTIALS) {
-                        def customImage = docker.build("${IMAGE_NAME}:${env.BUILD_NUMBER}")
-                        customImage.push()
-                        customImage.push('latest')
-                    }
-                }
-            }
-        }
-        
-        stage('Update Kubernetes Manifest') {
-            steps {
-                script {
-                    sh """
-                        sed -i "s|image: ${IMAGE_NAME}:.*|image: ${IMAGE_NAME}:${env.BUILD_NUMBER}|g" k8s/flask-deployment.yaml
-                        
-                        git config user.name "Jenkins CI"
-                        git config user.email "jenkins@ci.com"
-                        git add k8s/flask-deployment.yaml
-                        git commit -m "Update Flask image to ${env.BUILD_NUMBER}" || echo "No changes to commit"
-                        git push origin main
-                    """
-                }
-            }
-        }
-    }
-    
-    post {
-        success {
-            echo "✅ Deployment pipeline completed successfully!"
-        }
-        failure {
-            echo "❌ Pipeline failed!"
-        }
-    }
-}
-```
-
 ---
 
 ### **GitHub Webhook Setup**
@@ -150,35 +76,6 @@ pipeline {
 3. **Content type**: `application/json`
 4. Select **Just the push event**
 5. Add webhook
-
----
-
-### **ArgoCD Configuration**
-
-Create an ArgoCD Application that points to the `k8s/` folder in your single repository.
-
-**Example ArgoCD Application YAML** (`k8s/argocd-app.yaml`):
-
-```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: flask-mysql-app
-  namespace: argocd
-spec:
-  project: default
-  source:
-    repoURL: https://github.com/yourusername/flask-mysql-app.git
-    targetRevision: main
-    path: k8s
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: flask-app
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-```
 
 ---
 
