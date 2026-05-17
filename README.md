@@ -152,12 +152,6 @@ Go to **Jenkins → Manage Jenkins → Credentials → System → Global credent
 
 **Configure the job:**
 
-Under **General**:
-- ✅ Check **This project is parameterized**
-- Add a **String Parameter**:
-  - Name: `DOCKERTAG`
-  - Default value: `latest`
-
 Under **Pipeline**:
 - Definition: `Pipeline script from SCM`
 - SCM: `Git`
