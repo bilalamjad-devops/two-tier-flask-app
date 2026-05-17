@@ -7,7 +7,7 @@ I have fixed all errors, improved clarity, consistency, and made it **100% worka
 
 ---
 
-```markdown
+
 # Deploying Two-Tier Flask + MySQL Application using GitHub, Jenkins & ArgoCD
 
 This project demonstrates a complete **CI/CD + GitOps** workflow for a **Two-Tier** application (Flask backend + MySQL database) on Kubernetes using Jenkins and ArgoCD.
