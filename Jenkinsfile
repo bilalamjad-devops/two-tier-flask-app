@@ -1,54 +1,56 @@
-// Job 1: CI Pipeline (Build & Push)
-
 node {
-    def app
 
-    stage('Clone repository') {
-        // Pulls code from the Git repo configured in the Jenkins job UI
+    def app
+    def imageName = "YOUR_DOCKERHUB_USERNAME/flaskapp"
+    def gitEmail = "YOUR_GITHUB_EMAIL"
+    def gitUsername = "YOUR_GITHUB_USERNAME"
+
+    stage('Clone Repository') {
         checkout scm
     }
 
-    stage('Build image') {
-       // 👉 Replace 'Your-Docker-Hub-Username/test' with your actual Docker Hub "username/repo"
-       app = docker.build("bilalamjaddevops/test")
+    stage('Build Docker Image') {
+        app = docker.build("${imageName}")
     }
 
-    stage('Test image') {
+    stage('Test Docker Image') {
         app.inside {
-            // Add your actual test commands here (e.g., sh 'npm test' or sh 'pytest')
-            sh 'echo "Tests passed"'
+            sh 'echo "Tests Passed Successfully"'
         }
     }
 
-    stage('Push image') {
-        // 'dockerhub' must match the ID of your credentials stored in Jenkins
+    stage('Push Docker Image') {
         docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {
-            // Uses Jenkins Build Number as the tag (e.g., version 1, 2, 3...)
+            // Push with Jenkins BUILD_NUMBER tag for traceability
             app.push("${env.BUILD_NUMBER}")
+            // Also push latest tag
+            app.push("latest")
         }
     }
 
+    stage('Update Kubernetes Manifest') {
+        withCredentials([
+            usernamePassword(
+                credentialsId: 'github',
+                usernameVariable: 'GIT_USERNAME',
+                passwordVariable: 'GIT_PASSWORD'
+            )
+        ]) {
+            // Configure Git identity
+            sh "git config user.email '${gitEmail}'"
+            sh "git config user.name '${gitUsername}'"
 
-    stage('Update Manifest') {
-            script {
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    // 'github' must match your Jenkins Credentials ID for Git
-                    withCredentials([usernamePassword(credentialsId: 'github', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
-                        
-                        //👉 CHANGE: Set your own email and name for Git commits - Your-GitHub-email@example.com, Your-GitHub-Name
-                        sh "git config user.email devopsengineerbilalamjad@gmail.com"
-                        sh "git config Bilal Amjad "
-                        
-                        // This updates the 'image' field in deployment.yaml to the new tag
-                        //👉 CHANGE: Ensure the regex 'Your-Docker-Hub-Username/test.*' matches your YAML image string
-                        sh "sed -i 's+bilalamjaddevops/test.*+bilalamjaddevops/test:${DOCKERTAG}+g' deployment.yaml"
-                        
-                        sh "git add ."
-                        sh "git commit -m 'Done by Jenkins Job changemanifest: ${env.BUILD_NUMBER}'"
-                        
-                        // Ensure 'kubernetesmanifest.git' and the branch 'main' match your repo
-                        sh "git push https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/${GIT_USERNAME}/kubernetesmanifest.git HEAD:main"
-      }
+            // Update image tag in deployment manifest
+            sh """
+                sed -i 's+image:.*+image: ${imageName}:${BUILD_NUMBER}+g' k8s/two-tier-app-deployment.yml
+            """
+
+            // Commit and push updated manifest
+            sh 'git add .'
+            sh "git commit -m 'Updated image tag to ${BUILD_NUMBER}'"
+            sh """
+                git push https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/${GIT_USERNAME}/two-tier-flask-app.git HEAD:main
+            """
+        }
     }
-
 }
